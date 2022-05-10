@@ -1,0 +1,76 @@
+CREATE TEMP FUNCTION DateWithWeekOfMonth(date DATE) AS (
+    CAST(DIV(EXTRACT(DAY FROM date), 7) + 1 AS INT64)
+  );
+
+CREATE OR REPLACE TABLE `indicium-349201.Northwind.all_orders_details` AS (
+  
+  SELECT 
+    row_number() over(partition by order_id) count_products_in_order,
+    o.order_id,
+    row_number() over(partition by order_id order by o.product_id) count_products_in_order,
+    o.product_id,
+    o.unit_price,
+    o.quantity,
+    (o.unit_price * o.quantity) sales,
+    o.discount,
+    od.customer_id,
+    od.employee_id,
+    od.order_date,
+    DateWithWeekOfMonth(od.order_date) week_of_month,
+    od.required_date,
+    od.shipped_date,
+    od.ship_via,
+    od.freight,
+    od.ship_name,
+    od.ship_address,
+    od.ship_city,
+    od.ship_region,
+    od.ship_postal_code,
+    od.ship_country,
+    IF(row_number() over(partition by o.order_id)=1, freight, null) freight_by_order,
+    pd.product_name,
+    pd.supplier_id,
+    pd.category_id,
+    pd.quantity_per_unit,
+    pd.unit_price unit_price_products,
+    pd.units_in_stock,
+    pd.units_on_order,
+    pd.reorder_level,
+    pd.discontinued,
+    sup.company_name sup_company_name,
+    sup.contact_name sup_contact_name,
+    sup.contact_title sup_contact_title,
+    sup.address sup_address,
+    sup.city sup_city,
+    sup.region sup_region,
+    sup.postal_code sup_postal_code,
+    sup.country sup_country,
+    sup.phone sup_phone,
+    sup.fax sup_fax,
+    sup.homepage sup_homepage,
+    emp.last_name employees_last_name,
+    emp.first_name employees_first_name,
+    emp.title employees_title,
+    emp.title_of_courtesy employees_title_of_courtesy,
+    emp.birth_date employees_birth_date,
+    emp.hire_date employees_hire_date,
+    emp.address employees_address,
+    emp.city employees_city,
+    emp.region employees_region,
+    emp.postal_code employees_postal_code,
+    emp.country employees_country,
+    emp.home_phone employees_home_phone,
+    emp.extension employees_extension,
+    emp.photo employees_photo,
+    emp.notes employees_notes,
+    emp.reports_to employees_reports_to,
+    emp.photo_path employees_photo_path,
+    cust.city,
+    cust.campany_name,
+  FROM `indicium-349201.Northwind.order_details`  o
+  LEFT JOIN `indicium-349201.Northwind.orders` od ON od.order_id = o.order_id
+  LEFT JOIN `indicium-349201.Northwind.products` pd ON pd.product_id = o.product_id
+  LEFT JOIN `indicium-349201.Northwind.suppliers` sup ON pd.supplier_id = sup.supplier_id
+  LEFT JOIN `indicium-349201.Northwind.employees` emp ON od.employee_id = emp.employee_id
+  LEFT JOIN `indicium-349201.Northwind.customers` cust ON cust.customer_id = od.customer_id
+)
